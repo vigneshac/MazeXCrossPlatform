@@ -1,0 +1,43 @@
+ <html>
+    <head>
+		<title> MazeX  v1.0 </title>
+        <link href='http://fonts.googleapis.com/css?family=Exo:500|Source+Sans+Pro:400|Oxygen:400|Titillium+Web:400' rel='stylesheet' type='text/css'/>
+		<link rel="stylesheet" type="text/css" href="src/css/Welcome.css"/>
+		
+		<!--meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=0.75, minimum-scale=0.75, maximum-scale=0.75" /-->
+		<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+	</head>
+    <body>
+        <center>
+			Welcome to MazeX!!
+			<br/><br>
+			<progress id="pro" value="0" max="100">Loading..</progress>
+			<br/><br/>
+			<img src="src/img/loader.gif" alt="Loading" width="32" height="32" align="absmiddle"/>
+			<label id="status" style="font-size: 15">Initializing..</label>
+	</center>
+	
+	<script>
+		var value=0;
+		var myTimer = setInterval(setTime,100);
+		function setTime() {
+			value++;
+			document.getElementById("pro").value = value;
+			if(value<20) {}
+			else if(value<50) {
+				document.getElementById("status").innerHTML = "Loading modules..";
+			}
+			else if(value<100) {
+				document.getElementById("status").innerHTML = "Initializing graphics environment..";
+			}
+			else if(value==100) {
+				clearInterval(myTimer);
+				window.location.href = "src/Rules.html";
+			}
+		}
+	</script>
+    </body>
+</html>

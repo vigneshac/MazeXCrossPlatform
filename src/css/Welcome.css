@@ -1,0 +1,19 @@
+/* 
+    Document   : SubmitCSS
+    Created on : Feb 11, 2013, 2:33:28 PM
+    Author     : Vignesh
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+body { 
+    padding: 20%;
+    font-family: 'Titillium Web',sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+}
+
+progress {background-color:white;
+		text-align: left;}
+progress::-webkit-progress-bar-value, progress::-webkit-progress-value,
+progress::-moz-progress-bar {background-color:#1DAB22;}

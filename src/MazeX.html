@@ -1,0 +1,420 @@
+<html>
+
+<head>
+	<title> MazeX v1.0 </title>
+    <link href='http://fonts.googleapis.com/css?family=Exo:500|Source+Sans+Pro:400|Oxygen:400|Titillium+Web:400' rel='stylesheet' type='text/css'/>
+	<link rel="stylesheet" type="text/css" href="css/GameSettings.css"/>
+	
+	<!--meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=0.75, minimum-scale=0.75, maximum-scale=0.75" /-->
+	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+</head>
+
+<body class="gradient">
+
+<center>
+
+<h1> MazeX </h1>
+<label id="UpdateLabel"></label>
+ <h3> Level:
+	 <input type="radio" name="lev" id="One" checked>1</input>
+	 <input type="radio" name="lev" id="Two">2</input>
+	 <input type="radio" name="lev" id="Three">3</input>
+	 <input type="radio" name="lev" id="Four">4</input>
+	 <input type="radio" name="lev" id="Five">5</input>
+ </h3>
+ 
+<a href="#" id="startbutton" onclick="startGame()">Start Game</a>
+<br/><br/>
+
+<div id="gamediv">
+ 	<canvas id="myCanvas" width="256" height="256" style="border: 1px solid #d3d3d3;">
+		Your browser does not support the HTML5 canvas tag.
+	</canvas>
+ </div>
+ 
+ <p>
+	Time elapsed: <label id="min">0</label>:<label id="sec">00</label> &nbsp;&nbsp;&nbsp; Coins: <label id="coins">0</label> &nbsp;&nbsp;&nbsp; Live(s): <label id="lives">2</label>
+ </p>
+
+</center>
+	
+<script>
+	var c=document.getElementById("myCanvas");
+	var ctx=c.getContext("2d");
+	var totalscore = 0;
+	//var bgm = new Audio(), inter=new Audio();
+	var box = document.getElementById("myCanvas");
+	
+	var startMouseX = 0;
+	var startMouseY = 0;
+	var endMouseX = 0;
+	var endMouseY = 0;
+	
+	/* 
+		Conventions used -
+		0 - Grass
+		1 - Block
+		2 - Bomb
+		3 - Player
+		4 - Finish
+		5 - Coined
+		6 - Heart
+		7 - Penetrable block
+		8 - Penetrable bomb
+	*/
+	var grass = new Image();
+	grass.src = "img/grass.png";
+	var block = new Image();
+	block.src = "img/block.png";
+	var bomb = new Image();
+	bomb.src = "img/bomb.png";
+	var player = new Image();
+	player.src = "img/mario.png";
+	var finish = new Image();
+	finish.src = "img/finish.png";
+	var coin = new Image();
+	coin.src = "img/coin.png";
+	var heart = new Image();
+	heart.src = "img/heart.png";
+	
+	var levels = ['One', 'Two', 'Three', 'Four', 'Five'];
+	var curx, cury;
+	var mytimer; 	//Timer object
+	var time_elapsed=0;
+	
+	// 8x8 maze
+	var maze; 
+	
+	//createMaze();
+	function createMaze() {
+		var i, j;
+		ctx.clearRect(0,0,256,256);
+		
+		for(i=0; i<maze.length; i++)
+			for(j=0; j<maze.length; j++) 
+			{
+				switch(maze[i][j]) {
+					case 0: ctx.drawImage(grass,32*j,32*i);
+							break;
+					case 1: ctx.drawImage(block,32*j,32*i);
+							break;
+					case 2: ctx.drawImage(grass,32*j,32*i);
+							ctx.drawImage(bomb,32*j,32*i);
+							break;
+					case 4: ctx.drawImage(finish,32*j,32*i);
+							break;
+					case 5: ctx.drawImage(grass,32*j,32*i);
+							ctx.drawImage(coin,32*j,32*i);
+							break;
+					case 6: ctx.drawImage(grass,32*j,32*i);
+							ctx.drawImage(heart,32*j,32*i);
+							break;
+					case 7: ctx.drawImage(block,32*j,32*i);
+							break;
+					case 8: ctx.drawImage(grass,32*j,32*i);
+							ctx.drawImage(bomb,32*j,32*i);
+							break;
+				}
+			}
+		cury = 0;
+		curx = maze.length-1;
+		ctx.drawImage(player,32*cury,32*curx);
+		//bgm.src = "audio/bgm.mp3";
+		//bgm.type = "audio/mpeg";
+		//bgm.loop = true;
+		//bgm.play();
+	}
+	
+	function generateRandomCoins() {
+		var i;
+		var randx, randy;
+		for(i=0; i<10; i++) {
+			randx = parseInt(Math.random()*(maze.length-1));
+			randy = parseInt(Math.random()*(maze.length-1));
+			if(maze[randx][randy]==0)
+				maze[randx][randy] = 5;
+		}
+		
+	}
+	
+	function generateRandomHeart() {
+		var randx, randy;
+		randx = parseInt(Math.random()*(maze.length-1));
+		randy = parseInt(Math.random()*(maze.length-1));
+		if(maze[randx][randy]==0)
+			maze[randx][randy] = 6;
+		else
+			generateRandomHeart();
+	}
+	
+	function setMyKeyListeners() {
+	
+		function startDraw(e) { 
+			//alert("Start of touch");
+			e.preventDefault(); 
+			startMouseX = e.touches[0].pageX; startMouseY = e.touches[0].pageY; 
+		};
+		
+		function endDraw(e) { 
+			e.preventDefault();
+			endMouseX = e.changedTouches[0].pageX; 
+			endMouseY = e.changedTouches[0].pageY; 
+			
+			var diffX = endMouseX - startMouseX;
+			var diffY = endMouseY - startMouseY;
+			
+			var magX = diffX * diffX;
+			var magY = diffY * diffY;
+			
+			//alert("hello"+diffX+" "+diffY);
+			
+			if(magX > magY)	//Horizontal movement
+			{
+				//alert("horiz");
+				if(diffX > 0)
+					moveRight();
+				else if(diffX < 0)
+					moveLeft();
+			}
+			else {
+				//alert("vert");
+				if(diffY < 0)
+					moveUp();
+				else
+					moveDown();
+			}
+			
+			if(maze[curx][cury]==4) {
+				mytimer = clearInterval(mytimer);
+				//alert("Level Complete!! Your score is "+document.getElementById("coins").innerHTML);
+				document.getElementById('UpdateLabel').innerHTML = "Level Complete!! Your score is "+document.getElementById("coins").innerHTML;
+				curx = 0;
+				cury = maze.length - 1;
+				gotoNextLevel();
+			}
+			else if(maze[curx][cury]==2) {
+				var lives = parseInt(document.getElementById("lives").innerHTML);
+				if(lives>0) {
+					lives--;
+					//bgm.pause();
+					//inter.src = "audio/mariodie.wav";
+					//inter.loop = false;
+					//inter.play();
+					document.getElementById("lives").innerHTML = lives+"";
+					//alert("You have "+lives+" lives left.");
+					document.getElementById('UpdateLabel').innerHTML = "You have "+lives+" lives left.";
+					setTimeout(createMaze,1500);
+				}
+				else {
+					mytimer = clearInterval(mytimer);
+					//bgm.pause();
+					//inter.src = "audio/game-over.mp3";
+					//inter.loop = false;
+					//inter.play();
+					c.width = c.width;
+					document.getElementById('UpdateLabel').innerHTML = "Game over!! Your score: "+document.getElementById("coins").innerHTML;
+					//alert("Game over!! Your score: "+document.getElementById("coins").innerHTML);
+				}
+			}
+			else if(maze[curx][cury]==5) {
+				maze[curx][cury] = 0; //Setting it back to grass
+				var gold = parseInt(document.getElementById("coins").innerHTML);
+				gold++;
+				ctx.clearRect(32*cury, 32*curx, 32, 32);
+				ctx.drawImage(grass, 32*cury, 32*curx);
+				ctx.drawImage(player, 32*cury, 32*curx);
+				//inter.src = "audio/coin.wav";
+				//inter.loop = false;
+				//inter.play();
+				document.getElementById("coins").innerHTML = gold;
+			}
+			else if(maze[curx][cury]==6) {
+				maze[curx][cury] = 0; //Setting it back to grass
+				var lives = parseInt(document.getElementById("lives").innerHTML);
+				lives++;
+				ctx.clearRect(32*cury, 32*curx, 32, 32);
+				ctx.drawImage(grass, 32*cury, 32*curx);
+				ctx.drawImage(player, 32*cury, 32*curx);
+				//inter.src = "audio/oneup.mp3";
+				//inter.loop = false;
+				//inter.play();
+				document.getElementById("lives").innerHTML = lives;
+			}
+			//Hidden gold
+			else if(maze[curx][cury]==7 || maze[curx][cury]==8) {
+				maze[curx][cury] = 0; //Setting it back to grass
+				var gold = parseInt(document.getElementById("coins").innerHTML);
+				gold+=10;
+				//inter.src = "audio/coin.wav";
+				//inter.loop = false;
+				//inter.play();
+				document.getElementById("coins").innerHTML = gold;
+			}
+		};
+	
+		//Touch
+		box.addEventListener("touchstart",startDraw, true);
+		box.addEventListener("touchend",endDraw, false);
+		box.addEventListener("touchmove", function(e){e.preventDefault();}, false);
+	}
+	
+	function gotoNextLevel() {
+		if(document.getElementById(levels[0]).checked) {
+			totalscore = 0;
+		}
+		for(var i=0; i<levels.length; i++) {
+			if(document.getElementById(levels[i]).checked) {
+				if(i<levels.length-1) {
+					totalscore += parseInt(document.getElementById('coins').innerHTML);
+					document.getElementById(levels[i]).checked = false;
+					document.getElementById(levels[i+1]).checked = true;
+					if( i == (levels.length-2) ) {
+						var liv = parseInt(document.getElementById('lives').innerHTML);
+						liv += 3;
+						document.getElementById('lives').innerHTML = liv+"";
+						document.getElementById("UpdateLabel").innerHTML = "Congrats on reaching final level! You gain 3 lives\nP.S. You will need them :D";
+					//alert("Congrats on reaching final level! You gain 3 lives\nP.S. You will need them :D");
+					}
+					//bgm.pause();
+					//inter.src = "audio/levelcomplete.mp3";
+					//inter.loop = false;
+					//inter.play();
+					setTimeout(startGame,5000);
+					return 0;
+				}
+				else {
+					totalscore += parseInt(document.getElementById('coins').innerHTML);
+					//bgm.pause();
+					//inter.src = "audio/levelcomplete.mp3";
+					//inter.loop = false;
+					//inter.play();
+					document.getElementById("UpdateLabel").innerHTML = "Your total score is: "+totalscore;
+					//alert("Your total score is: "+totalscore);
+					c.width = c.width;
+				}
+				
+			}
+		}
+		
+	}
+	
+	function moveLeft() {
+		if(cury > 0) //Not hitting boundary
+		{
+			if( maze[curx][cury-1] != 1 )
+			{	
+				ctx.clearRect(32*cury, 32*curx, 32, 32);
+				ctx.drawImage(grass, 32*cury, 32*curx);
+				cury = cury - 1;
+				ctx.drawImage(player, 32*cury, 32*curx);
+			}
+		}
+	}
+
+	function moveRight() {
+		if(cury < maze.length-1) //Not hitting boundary
+		{
+			if( maze[curx][cury+1] != 1 )
+			{	
+				ctx.clearRect(32*cury, 32*curx, 32, 32);
+				ctx.drawImage(grass, 32*cury, 32*curx);
+				cury = cury + 1;
+				ctx.drawImage(player, 32*cury, 32*curx);
+			}
+		}
+	}
+	
+	function moveUp() {
+		if(curx > 0) //Not hitting boundary
+		{
+			if( maze[curx-1][cury] != 1 )
+			{	
+				ctx.clearRect(32*cury, 32*curx, 32, 32);
+				ctx.drawImage(grass, 32*cury, 32*curx);
+				curx = curx - 1;
+				ctx.drawImage(player, 32*cury, 32*curx);
+			}
+		}
+	}
+
+	function moveDown() {
+		if(curx < maze.length-1) //Not hitting boundary
+		{
+			if( maze[curx+1][cury] != 1 )
+			{	
+				ctx.clearRect(32*cury, 32*curx, 32, 32);
+				ctx.drawImage(grass, 32*cury, 32*curx);
+				curx = curx + 1;
+				ctx.drawImage(player, 32*cury, 32*curx);
+			}
+		}
+	}
+	
+	function startGame() {
+		c.width = c.width;
+		document.getElementById("coins").innerHTML="0";
+		document.getElementById("lives").innerHTML="2";
+		generateMaze();
+		generateRandomCoins();
+		generateRandomHeart();
+		createMaze();
+		time_elapsed = 0;
+		//bgm.play();
+		mytimer = clearInterval(mytimer);
+		mytimer=setInterval(setTime,1000);
+	}
+	
+	function generateMaze() {
+	
+		//Generate mazes based on difficulty level
+	
+		if(document.getElementById('One').checked) {
+			maze = [ [1,7,1,1,1,1,1,4], [0,0,0,0,0,0,0,0], [0,1,0,1,0,1,0,0], [0,1,0,0,2,1,0,0],
+				 [0,0,0,1,1,0,0,1], [0,1,0,0,0,0,1,1], [0,1,1,1,1,0,0,1], [0,1,1,1,1,1,1,1] ];
+		}
+		else if(document.getElementById('Two').checked) {
+			maze = [ [1,1,0,1,1,1,0,0,4], [1,0,0,0,0,1,0,1,1], [1,0,1,1,2,1,0,0,0], [0,0,0,0,0,0,0,1,0],
+				 [0,1,0,1,0,1,0,0,0], [0,1,0,0,0,0,0,1,1], [0,0,1,0,1,1,1,1,1], [1,0,0,0,0,0,0,0,0], [0,0,1,1,1,1,0,7,1] ];
+		}
+		else if(document.getElementById('Three').checked) {
+			maze = [ [1,1,0,0,0,1,1,1,1,1], [1,1,0,1,7,1,0,0,0,0], [0,0,0,1,4,1,0,1,1,0], [0,1,0,1,1,1,0,1,0,0], [1,2,0,0,0,0,0,1,0,1],
+				 [1,0,1,1,1,1,1,1,0,1], [1,0,0,0,0,0,0,1,0,1], [1,1,0,1,1,0,1,1,0,1], [1,1,0,1,0,0,0,0,0,1], [0,0,0,0,0,1,1,1,0,1] ];
+		}
+		else if(document.getElementById('Four').checked) {
+			maze = [ [0,0,1,7,0,4,1,2,0,0,0],[1,0,1,1,0,2,2,2,0,2,0],[1,0,0,0,0,2,1,0,0,1,0],[0,0,1,0,0,2,1,1,1,1,0],
+					 [0,0,1,1,1,2,0,0,0,0,0],[0,1,1,0,0,0,0,1,1,0,2],[0,2,1,0,1,1,1,1,1,0,1],[0,1,0,0,1,1,1,1,0,0,1],
+					 [0,0,0,1,0,0,0,2,0,0,1],[2,1,2,1,0,2,0,1,1,0,1],[0,0,0,0,0,1,0,0,0,0,1]];
+		}
+		else if(document.getElementById('Five').checked) {
+			maze = [[0,0,0,0,2,1,0,2,0,0,2,4],[2,2,8,2,2,1,0,1,0,0,2,8],[0,0,0,0,0,1,0,2,0,0,0,0],
+                    [0,0,2,2,0,1,0,8,0,1,2,2],[0,0,1,0,0,1,0,1,0,1,1,1],[0,0,1,0,0,1,0,1,0,8,0,0],
+                    [0,0,1,0,0,8,0,1,0,2,0,0],[0,0,1,0,0,2,0,1,0,8,0,0],[8,1,2,1,2,2,1,1,1,2,2,2],
+                    [0,0,0,0,0,0,0,0,0,0,0,0],[1,1,2,2,1,1,8,1,2,2,1,1],[0,0,0,0,0,0,0,0,0,0,0,0]];		
+		}
+		
+		
+		//Setting width and height of canvas based on the maze size
+		document.getElementById("myCanvas").width = 32 * maze.length;
+		document.getElementById("myCanvas").height = 32 * maze.length;
+		document.getElementById("myCanvas").style.marginTop = (12-maze.length) * 16;
+	}
+	
+    function setTime()
+    {
+		time_elapsed++;
+		document.getElementById('min').innerHTML = parseInt(time_elapsed/60)+'';
+		sec = time_elapsed%60;
+		document.getElementById('sec').innerHTML = (sec>9)?(sec+''):('0'+sec);
+    }
+	
+	//Setting the Key listeners
+	setMyKeyListeners();
+
+
+</script>
+
+</body>
+
+</html>

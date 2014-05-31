@@ -1,0 +1,51 @@
+.gradient{
+    /* For any browser that can't create a gradient  */ background-color: #005C00;
+    /*//mozilla*/ background: -moz-linear-gradient(top, #FFF, #0A1A03);
+    /* Chrome/Safari */ background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#0A1A03));
+    /*IE 6/7 */ filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=0, StartColorStr='#FFF',EndColorStr='#0A1A03');
+    /*IE 8 */ -ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#FFF, endColorstr=#0A1A03)";
+}
+
+body { 
+    font-family: 'Titillium Web',sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+	color: white;
+}
+
+h1, h3 {
+	color: black;
+}
+
+#gamediv {
+	width: 384px;
+	height: 384px;
+	margin: 0px auto;
+}
+
+#updateLabel {
+	font-family: 'Titillium Web',sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+	color: #003366;
+}
+
+canvas {
+	margin-top: 64px;
+}
+
+a:link, a:visited {
+    background-color: #003300;
+	padding: 10px;
+    text-decoration: none;
+    color:#DDDDDD;
+    border: 1px solid white;
+}
+
+a:hover, a:active {
+    background-color:#006600;
+	padding: 10px;
+	text-decoration: none;
+    color:#FFF;
+    border: 1px solid white;
+}
